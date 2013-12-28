@@ -1,0 +1,18 @@
+{% extends "spirits/modal.jinja" %}
+
+{% block modal_title %}File Browser{% endblock %}
+
+{% block modal_id %}file_browser{% endblock %}
+
+{% block modal_buttons %}
+    <div class="pull-left">
+        <span class="btn btn-success fileinput-button">
+            <i class="glyphicon glyphicon-plus"></i>
+            <span>Upload files...</span>
+            <input class="" type="file" name="files[]" multiple="">
+        </span>
+    </div>
+    {{ super() }}
+{% endblock %}
+
+

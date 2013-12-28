@@ -1,0 +1,30 @@
+@media (min-width: 960px) {
+    #file_browser_modal .modal-dialog {
+        width: 960px;
+    }
+}
+
+
+
+#file_browser_modal .grid .item.selected {
+    border-color: #66AFE9;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(102, 175, 233, 0.6);
+    outline: 0 none;
+}
+
+#file_browser_modal .modal-body {
+    padding: 10px 0;
+    overflow: auto;
+}
+
+#file_browser_modal .modal-dialog .item-default-wrapper {
+    display: none;
+}
+
+#file_browser_modal .grid .item {
+    cursor: pointer;
+}
+
+#file_browser_modal .folder .item-delete-wrapper {
+    display: none;
+}

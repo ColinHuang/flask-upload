@@ -1,0 +1,126 @@
+.file-widget .trans-bkgd {
+    position:absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #000;
+    opacity: 0.67;
+}
+
+.file-widget .item {
+    overflow: hidden;
+}
+.file-widget .list .item {
+
+}
+.file-widget .grid .item {
+    display: inline-block;
+    position: relative;
+    vertical-align: middle;
+    border: 1px solid;
+    border-radius: 6px;
+}
+
+.file-widget .grid.size4 .item {
+    margin: 6px 18px;
+}
+
+.file-widget .grid.size4 .item,
+.file-widget .grid.size4 .item-wrapper {
+    height: 200px;
+    width: 200px;
+}
+
+.file-widget .grid.size2 .item {
+    margin: 7px;
+}
+
+.file-widget .grid.size2 .item,
+.file-widget .grid.size2 .item-wrapper {
+    height: 76px;
+    width: 76px;
+}
+
+.file-widget .grid .item-delete-wrapper {
+    right: 0;
+}
+.file-widget .grid .item-default-wrapper {
+    left: 0;
+}
+.file-widget .grid .item-delete-wrapper,
+.file-widget .grid .item-default-wrapper {
+    position: absolute;
+    top: 0;
+    opacity: 0;
+    cursor: pointer;
+    transition: all 0.5s ease;
+}
+
+.file-widget .grid .item:hover .item-delete-wrapper,
+.file-widget .grid .item:hover .item-default-wrapper {
+    opacity: 1.0;
+}
+
+.file-widget .grid .item-delete-wrapper .trans-bkgd {
+    border-bottom-left-radius: 6px;
+}
+
+.file-widget .grid .item-default-wrapper .trans-bkgd {
+    border-bottom-right-radius: 6px;
+}
+
+.file-widget .grid .item-delete,
+.file-widget .grid .item-default {
+    padding: 1px 6px;
+}
+
+.file-widget .item-delete i {
+    color: #ff0000;
+}
+
+.file-widget .item-default i {
+    color: #9fba41;
+}
+
+.file-widget .grid.size4 .item-delete i,
+.file-widget .grid.size4 .item-default i {
+    font-size: 28px;
+}
+.file-widget .grid.size2 .item-delete i,
+.file-widget .grid.size2 .item-default i {
+    font-size: 16px;
+}
+
+
+.file-widget .grid .item-name-wrapper {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+}
+.file-widget .trans-super {
+    position: relative;
+    z-index: 1;
+}
+.file-widget .grid .item-name {
+    white-space: nowrap;
+    color: #eee;
+    padding: 3px 5px;
+}
+
+
+.file-widget img.height-100 {
+    height: 100%;
+}
+
+.file-widget img.width-100 {
+    width: 100%;
+}
+
+.file-widget .grid .folder {
+    background-image: url(/upload/static/images/folder64.png);
+    background-repeat: no-repeat;
+    background-position: center center;
+}

@@ -1,0 +1,7 @@
+.file-field .file-widget .grid .item.default {
+    border: 1px solid #9FBA41;
+
+}
+.file-field .grid .item.default .item-default-wrapper {
+    display: none;
+}
