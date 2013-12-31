@@ -8,5 +8,6 @@ setup(
     install_requires=[
         'Flask>=0.10.1',
         'Pillow>=2.2.1'
-    ]
+    ],
+    packages=['flask_upload']
 )
