@@ -48,7 +48,16 @@ class UploadedFileBase(object):
     def get_web_path(self):
         return str(current_app.config['UPLOAD_WEB_PATH'] + 
             self.path + self.name)   
-         
+
+    def get_thumbnail(size):
+        return current_app.config['EXTERNAL_URI'] + current_app.config['THUMBNAIL_WEB_PATH'] + \
+            self.path + self.name + str(size) + '.jpg'
+
+    def get_graph_thumbnail(self):
+        return current_app.config['EXTERNAL_URI'] + current_app.config['THUMBNAIL_WEB_PATH'] + \
+            self.path + self.name + '_graph.jpg'
+
+
     @classmethod
     def get_by_directory(self, path='/'):
         return self.query.filter(self.path == path).all()
@@ -82,3 +91,30 @@ class UploadedFileBase(object):
 
         thumb.convert('RGB').save(current_app.config['THUMBNAIL_PATH'] + 
             self.path + self.name + str(size[0]) + '.jpg')
+
+    def graph_thumbnail(self):
+        image = Image.open(self.get_absolute_path())
+        if self.width >= 1200:
+            size = (1200, 630)
+        elif self.width >= 600:
+            size = (600, 315)
+        else:
+            aspect = self.width / float(self.height)
+            ideal_aspect = 600 / float(315)
+            if aspect > ideal_aspect:
+                # Then crop the left and right edges:
+                new_width = int(ideal_aspect * height)
+                offset = (width - new_width) / 2
+                resize = (offset, 0, width - offset, height)
+            else:
+                # ... crop the top and bottom:
+                new_height = int(width / ideal_aspect)
+                offset = (height - new_height) / 2
+                resize = (0, offset, width, height - offset)
+            thumb = image.crop(resize).resize((ideal_width, ideal_height), Image.ANTIALIAS)
+            thumb.convert('RGB').save(current_app.config['THUMBNAIL_PATH'] + 
+                self.path + self.name + '_graph.jpg')   
+            return
+        thumb = ImageOps.fit(image, size, Image.ANTIALIAS, (0.5, 0.5))
+        thumb.convert('RGB').save(current_app.config['THUMBNAIL_PATH'] + 
+            self.path + self.name + '_graph.jpg')

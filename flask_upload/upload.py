@@ -11,8 +11,8 @@ from werkzeug import secure_filename
 from flask_spirits.spirits import jsonify
 from flask_upload.models import UploadedFileBase
 
-bp = Blueprint('upload', __name__, template_folder='../jinja', 
-    static_folder='../static')
+bp = Blueprint('upload', __name__, template_folder='jinja', 
+    static_folder='static')
 
 # Overwite this in app!
 bp.UploadedFile = UploadedFileBase
