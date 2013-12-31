@@ -31,7 +31,8 @@ class FileField(Field):
         
         if formdata and self.name in formdata:
             self.data = formdata[self.name]
-            
+        else:
+            self.data = None
         #super(FileField, self).process(formdata, data)
 
     def process_formdata(self, valuelist):
@@ -39,7 +40,7 @@ class FileField(Field):
         super(FileField, self).process_formdata(valuelist)
 
     def populate_obj(self, obj, name):
-        data = None if len(self.data) == 0 else self.data
+        data = None if not self.data else self.data
         setattr(obj, name, data)
         if data and self.prop:
             setattr(obj, self.prop, self.uploaded_file_model.get(self.data))
