@@ -36,11 +36,11 @@
         }).on('delete-item', function(e, file) {
             for (var x = 0; x < self.files.length; x++) {
                 if (self.files[x].id == file.data('info').id) {
-                    file = self.files.splice(x, 1);
+                    file = self.files.splice(x, 1)[0];
                     break;
                 }
             }
-            if (file[0].id == self.selected)  {
+            if (file.id == self.selected)  {
                 if (self.files[0]) {
                     self.selected = self.files[0].id;
                     self.get_item(self.files[0].id).addClass('default');
@@ -48,10 +48,12 @@
                     self.selected = false;
                 }
             }
-            self.get_item(file[0].id).fadeOut();
+            self.get_item(file.id).fadeOut();
+            self.$.trigger('filefield.change');
         }).on('click', '.item-default-wrapper', function() {
             self.selected = $(this).parent().addClass('default').data('info').id;
             $(this).parent().siblings().removeClass('default');
+            self.$.trigger('filefield.change');
         });
 
         this.$ = element.fileupload({
@@ -65,6 +67,14 @@
         });
     }
     FileField.prototype = {
+        disable: function() {
+            this.$.attr('disabled','disabled');
+            this.controls.find('.btn').addClass('disabled');
+        },
+        enable: function() {
+            this.$.removeAttr('disabled');
+            this.controls.find('.btn').removeClass('disabled');
+        },
         load: function(ids) {
             var self = this;
             $.post('/upload/load',{ids: ids}, function(files) {
@@ -100,6 +110,7 @@
                     if (this.selected)
                         this.get_item(this.selected).addClass('default'); 
                 }
+                this.$.trigger('filefield.change');
             } else {
                 if (this.files.length == 0) 
                     return undefined;
@@ -125,6 +136,7 @@
             this.files = [];
             this.selected = false;
             this.fw.find('.files').html('');
+            this.$.trigger('filefield.change');
             return this;
         }
     }

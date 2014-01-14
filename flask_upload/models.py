@@ -1,4 +1,4 @@
-from flask import current_app
+from flask import current_app as app
 from sqlalchemy import Column, DateTime, Integer, String, Text
 from PIL import Image, ImageOps, ImageChops
 
@@ -32,67 +32,68 @@ class UploadedFileBase(object):
             'web_path': self.get_web_path()
         }
         if self.height != None:
-            file_data['image'] = True
-            file_data['width'] = self.width
-            file_data['height'] = self.height
+            file_data.update(
+                image=True,
+                height=self.height,
+                width=self.width
+            )
         return file_data
 
+    def get_path(self):
+        return "%s%s" % (self.path, self.name)
+
     def get_external_uri(self):
-        return str(current_app.config['EXTERNAL_URI'] + 
-            current_app.config['UPLOAD_WEB_PATH'] + self.path + self.name)
+        return "%s%s%s" % (app.config['EXTERNAL_URI'],
+            app.config['UPLOAD_WEB_PATH'], self.get_path())
     
     def get_absolute_path(self):
-        return str(current_app.config['UPLOAD_PATH'] + 
-            self.path + self.name)
+        return "%s%s" % (app.config['UPLOAD_PATH'], self.get_path())
     
     def get_web_path(self):
-        return str(current_app.config['UPLOAD_WEB_PATH'] + 
-            self.path + self.name)   
+        return "%s%s" % (app.config['UPLOAD_WEB_PATH'], self.get_path())   
 
     def get_thumbnail(size):
-        return current_app.config['EXTERNAL_URI'] + current_app.config['THUMBNAIL_WEB_PATH'] + \
-            self.path + self.name + str(size) + '.jpg'
+        return "%s%s%s%s.jpg" % (app.config['EXTERNAL_URI'], 
+            app.config['THUMBNAIL_WEB_PATH'], self.get_path(), str(size))
 
     def get_graph_thumbnail(self):
-        return current_app.config['EXTERNAL_URI'] + current_app.config['THUMBNAIL_WEB_PATH'] + \
-            self.path + self.name + '_graph.jpg'
+        return "%s%s%s_graph.jpg" % (app.config['EXTERNAL_URI'], 
+            app.config['THUMBNAIL_WEB_PATH'], self.get_path())
 
 
     @classmethod
     def get_by_directory(self, path='/'):
         return self.query.filter(self.path == path).all()
-    @classmethod
-    def get_file(self, path='/', name='/'):
-        return self.query.filter()
+   
+    def open(self):
+        return open(self.get_absolute_path())
 
     def thumbnail_css(self, size=260):
         if self.width > self.height:
-            css = 'width: 100%; margin-top: ' + \
-                str((size - ((size * self.height) / self.width)) / 2) + 'px;'
+            css = 'width: 100%; margin-top: %spx' % \
+                (size - ((size * self.height) / self.width) / 2) 
         else:
             css = 'height: 100%'
         return css
 
     def thumbnail(self, size=(250,250), pad=False):
         image = Image.open(self.get_absolute_path())
-        image_size = image.size
 
         if pad:
-            
-            thumb = image.crop( (0, 0, size[0], size[1]) )
+            thumb = image.crop((0, 0, size[0], size[1]))
 
-            offset_x = max( (size[0] - image_size[0]) / 2, 0 )
-            offset_y = max( (size[1] - image_size[1]) / 2, 0 )
+            offset_x = max((size[0] - self.width) / 2, 0)
+            offset_y = max((size[1] - self.height) / 2, 0)
 
             thumb = ImageChops.offset(thumb, offset_x, offset_y)
 
         else:
             thumb = ImageOps.fit(image, size, Image.ANTIALIAS, (0.5, 0.5))
-
-        thumb.convert('RGB').save(current_app.config['THUMBNAIL_PATH'] + 
-            self.path + self.name + str(size[0]) + '.jpg')
+        path = (app.config['THUMBNAIL_PATH'], self.get_path(), size[0])
+        thumb.convert('RGB').save('%s%s%s.jpg' % path)
 
     def graph_thumbnail(self):
+        """ Generates a thumbnail as close as possible to 1.91:1 ratio""" 
         image = Image.open(self.get_absolute_path())
         if self.width >= 1200:
             size = (1200, 630)
@@ -111,10 +112,9 @@ class UploadedFileBase(object):
                 new_height = int(width / ideal_aspect)
                 offset = (height - new_height) / 2
                 resize = (0, offset, width, height - offset)
-            thumb = image.crop(resize).resize((ideal_width, ideal_height), Image.ANTIALIAS)
-            thumb.convert('RGB').save(current_app.config['THUMBNAIL_PATH'] + 
-                self.path + self.name + '_graph.jpg')   
-            return
-        thumb = ImageOps.fit(image, size, Image.ANTIALIAS, (0.5, 0.5))
-        thumb.convert('RGB').save(current_app.config['THUMBNAIL_PATH'] + 
-            self.path + self.name + '_graph.jpg')
+            thumb = image.crop(resize).resize((600, 315), Image.ANTIALIAS)
+
+        if self.width >= 600:
+            thumb = ImageOps.fit(image, size, Image.ANTIALIAS, (0.5, 0.5))
+        path = (app.config['THUMBNAIL_PATH'], self.get_path())
+        thumb.convert('RGB').save("%s%s_graph.jpg" % path)
