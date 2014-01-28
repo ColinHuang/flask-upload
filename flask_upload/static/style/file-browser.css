@@ -24,7 +24,25 @@
 #file_browser_modal .grid .item {
     cursor: pointer;
 }
-
-#file_browser_modal .folder .item-delete-wrapper {
+#file_browser_modal .item.ui-draggable-dragging {
+    z-index: 1000;
+}
+#file_browser_modal .folder .item-delete-wrapper
+#file_browser_modal .item.ui-draggable-dragging .item-delete-wrapper {
     display: none;
 }
+
+#file_browser_modal .empty {
+    padding-top: 52px;
+    text-align: center;
+    display: none; 
+}
+#file_browser_modal.is-empty .empty {
+    display: block;
+}
+
+#file_browser_modal.root .root-folder,
+#file_browser_modal.root .up-folder {
+    display: none;
+}
+

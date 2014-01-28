@@ -1,13 +1,13 @@
 ;(function() {
     var FileWidget = function(element, options) {   
-        var fw = this;   
+        var self = this;   
         _.extend(this, options);
-        this.$ = $(element).addClass('file-widget');
+        this.element = $(element).addClass('file-widget');
         this.files = $('<div/>',{'class':'files'}).appendTo(element);
         this.setview(this.view)
         this.setsize(this.size)
         this.files.on('click', '.item-delete-wrapper', function() {
-            fw.$.trigger('delete-item', [$(this).parent()]);
+            self.element.trigger('delete-item', [ $(this).parent() ]);
         });
     }
     FileWidget.prototype = {
@@ -34,22 +34,20 @@
                 '</div>',
                 '<div class="item-wrapper"/>',    
             '</div>'];
-            this.$.trigger('makefile', [file])
+            this.element.trigger('makefile', [file])
             return $(file.join(''));
         },
-        loadfiles: function(files, c) {
-            if (typeof c === 'undefined') 
-                c = 'file';
+        loadfiles: function(files, callback) {
             for(var x = 0; x < files.length; x++) {
                 var file = files[x], 
-                    item = this.makefile(file.title).appendTo(this.files).addClass(c),
-                    iw = item.find('.item-wrapper'),
-                    size = iw.height();
+                    item = this.makefile(file.name).appendTo(this.files),
+                    wrapper = item.find('.item-wrapper'),
+                    size = wrapper.height();
                 item.data('info', file);
                 if (file.id)
                     item.attr('data-id', file.id);
                 if (file.image) {
-                    var img = $('<img/>',{src: file.web_path});
+                    var img = file.img = $('<img />', { src: file.web_path });
 
                     if (file.width > file.height) {
                         img.width('100%').css('margin-top', (size - ((size * file.height) / file.width)) / 2);
@@ -63,9 +61,11 @@
                             'margin-top': (size - file.height)/2
                         })
                     }
-                    iw.html(img);
+                    wrapper.html(img);
                 } else if (file.mime) 
                     file.addClass(file.mime.replace('/','_'));
+                if (callback)
+                    callback(item, file);
             }
             return this;
         }
@@ -87,10 +87,8 @@
                 if (typeof data[option] === 'function')
                     data[option].apply(data, Array.prototype.slice.call(args,1))
                 else if(typeof args[1] !== 'undefined') data[option] = args[1];        
-                else return data[option];      
             }     
         });
-        return data;
     }
     
 })();

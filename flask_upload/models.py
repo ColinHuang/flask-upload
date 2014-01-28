@@ -1,33 +1,41 @@
 from flask import current_app as app
-from sqlalchemy import Column, DateTime, Integer, String, Text
+from flask_spirits.database import Model
+from sqlalchemy import Column, DateTime, Integer, String, Text, ForeignKey
+from sqlalchemy.orm import relationship, backref
 from PIL import Image, ImageOps, ImageChops
 
-class UploadedFileBase(object):
-    """ An Uploaded File"""
+
+class UploadedFile(Model):
+    """
+    An uploaded file with meme. Image data included if file is image.
+    File may be in one folder.
+    """
+    
     __tablename__ = 'uploaded_file'
     id = Column(Integer, primary_key=True)
     path = Column(String(255))
     name = Column(String(255))
-    title = Column(String(255))
     mime = Column(String(100))
     height = Column(Integer, nullable=True)
     width = Column(Integer, nullable=True)
-    def __init__(self, path, name, mime, title, height=None, width=None):
+    folder_id = Column(ForeignKey('upload_folder.id'), unique=False, nullable=True)
+    folder = relationship('UploadFolder', backref='files')
+
+    def __init__(self, path, mime, name, height=None, width=None):
         self.path = path
-        self.name = name
         self.mime = mime
-        self.title = title
+        self.name = name
         self.height = height
         self.width = width
+
     def __repr__(self):
-        return "<File '%s' [%s] %s%s>" % \
-            (self.title, self.mime, self.path, self.name)
+        return "<File '%s' [%s] %s>" %  (self.name, self.mime, self.path)
+
     def __json__(self):
         file_data = {
             'id': self.id,
             'path': self.path,
             'name': self.name,
-            'title': self.title,
             'mime': self.mime,
             'web_path': self.get_web_path()
         }
@@ -39,31 +47,27 @@ class UploadedFileBase(object):
             )
         return file_data
 
-    def get_path(self):
-        return "%s%s" % (self.path, self.name)
-
     def get_external_uri(self):
         return "%s%s%s" % (app.config['EXTERNAL_URI'],
-            app.config['UPLOAD_WEB_PATH'], self.get_path())
+            app.config['UPLOAD_WEB_PATH'], self.path)
     
     def get_absolute_path(self):
-        return "%s%s" % (app.config['UPLOAD_PATH'], self.get_path())
+        return "%s%s" % (app.config['UPLOAD_PATH'], self.path)
     
     def get_web_path(self):
-        return "%s%s" % (app.config['UPLOAD_WEB_PATH'], self.get_path())   
+        return "%s%s" % (app.config['UPLOAD_WEB_PATH'], self.path)   
 
     def get_thumbnail(size):
         return "%s%s%s%s.jpg" % (app.config['EXTERNAL_URI'], 
-            app.config['THUMBNAIL_WEB_PATH'], self.get_path(), str(size))
+            app.config['THUMBNAIL_WEB_PATH'], self.path, str(size))
 
     def get_graph_thumbnail(self):
         return "%s%s%s_graph.jpg" % (app.config['EXTERNAL_URI'], 
-            app.config['THUMBNAIL_WEB_PATH'], self.get_path())
-
+            app.config['THUMBNAIL_WEB_PATH'], self.path)
 
     @classmethod
-    def get_by_directory(self, path='/'):
-        return self.query.filter(self.path == path).all()
+    def get_root_files(self):
+        return self.query.filter(self.folder_id == None).all()
    
     def open(self):
         return open(self.get_absolute_path())
@@ -118,3 +122,26 @@ class UploadedFileBase(object):
             thumb = ImageOps.fit(image, size, Image.ANTIALIAS, (0.5, 0.5))
         path = (app.config['THUMBNAIL_PATH'], self.get_path())
         thumb.convert('RGB').save("%s%s_graph.jpg" % path)
+
+class UploadFolder(Model):
+    __tablename__ = 'upload_folder'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+    created = Column(DateTime)
+    parent_id = Column(ForeignKey('upload_folder.id'), unique=False, nullable=True)
+    children = relationship('UploadFolder', 
+        backref=backref('parent', remote_side=[id]))
+
+    @classmethod
+    def get_root_folders(self):
+        return self.query.filter(self.parent_id == None).all()
+
+
+    def __json__(self):
+        return dict(
+            id=self.id,
+            name=self.name,
+            parent=self.parent
+        )
+    
+    

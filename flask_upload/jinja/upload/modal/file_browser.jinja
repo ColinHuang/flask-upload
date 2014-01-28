@@ -4,12 +4,28 @@
 
 {% block modal_id %}file_browser{% endblock %}
 
+{% block modal_body %}
+    <div class="empty">
+        <h2>This folder is empty.</h2>
+    </div>
+{% endblock %}
+
 {% block modal_buttons %}
     <div class="pull-left">
-        <span class="btn btn-success fileinput-button">
+        <span class="btn btn-success fileinput-button" title="Upload files to this directory">
             <i class="glyphicon glyphicon-plus"></i>
             <span>Upload files...</span>
             <input class="" type="file" name="files[]" multiple="">
+        </span>
+        <span class="btn btn-primary create-folder" title="Create a folder in this directory">
+            <i class="glyphicon glyphicon-folder-open"></i>
+            <span>Create Folder</span>
+        </span>
+        <span class="btn btn-info root-folder" title="Go to root directory">
+            <i class="glyphicon glyphicon-home"></i>
+        </span>
+        <span class="btn btn-info up-folder" title="Go up one directory">
+            <i class="glyphicon glyphicon-arrow-up"></i>
         </span>
     </div>
     {{ super() }}

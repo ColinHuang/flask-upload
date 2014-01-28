@@ -1,25 +1,20 @@
 import os
 import magic
-
-from random import randint
-
-from PIL import Image
+import random
 from flask import Blueprint, render_template, abort, session, redirect, \
-    request, current_app
+    request, current_app as app
 from flask.ext.assets import Bundle
-from werkzeug import secure_filename
 from flask_spirits.spirits import jsonify
-from flask_upload.models import UploadedFileBase
+from flask_upload.models import UploadedFile, UploadFolder
+from PIL import Image
+from werkzeug import secure_filename
 
 bp = Blueprint('upload', __name__, template_folder='jinja', 
     static_folder='static')
 
-# Overwite this in app!
-bp.UploadedFile = UploadedFileBase
-
 @bp.app_template_global()
 def get_upload_web_path():
-    return current_app.config['UPLOAD_WEB_PATH']
+    return app.config['UPLOAD_WEB_PATH']
 
 js_blueimp = Bundle(
     'upload/lib/jquery.iframe-transport.js', 
@@ -41,20 +36,26 @@ css_all = Bundle(css_blueimp, css_file, css_filebrowser, css_filefield)
 _image_mimes = ['image/jpeg', 'image/png', 'image/gif', 'image/x-ms-bmp']
 
 
-def generate_filename():
-    return ''.join(chr(randint(97, 122)) for _ in range(16))
+def generate_filename(length=16):
+    'Generates a unique file name containing a-z A-Z 0-9'
+    pool = range(48, 57) + range(65, 90) + range(97, 122)
+    return ''.join(chr(random.choice(pool)) for _ in range(length))
 
 
-def _handle_upload(files, upload_dir='/'):
+def _handle_upload(files):
+    'Handles uploaded files'
     if not files:
-        return None
+        return []
+
     json = []
-    upload_path = current_app.config['UPLOAD_PATH']
-    web_path = current_app.config['UPLOAD_WEB_PATH']
+    upload_path = app.config['UPLOAD_PATH']
+    web_path = app.config['UPLOAD_WEB_PATH']
+    magic_mime = magic.Magic(mime=True)
+
     accept_only = None
-    if 'UPLOAD_ACCEPT_ONLY' in current_app.config:
-        accept_only = current_app.config['UPLOAD_ACCEPT_ONLY']
-    mime = magic.Magic(mime=True)
+    if 'UPLOAD_ACCEPT_ONLY' in app.config:
+        accept_only = app.config['UPLOAD_ACCEPT_ONLY']
+
     for key, upload in files.iteritems():
         if '.' not in upload.filename:
             upload.rawname = upload.filename
@@ -64,60 +65,88 @@ def _handle_upload(files, upload_dir='/'):
            
         exists = True
         while exists:
-            file_name = secure_filename(generate_filename() + upload.ext)
-            file_path = upload_path + upload_dir + file_name
+            path = secure_filename(generate_filename() + upload.ext)
+            file_path = upload_path + path
             exists = os.path.exists(file_path)
 
         upload.save(file_path)
-        file_data = {
-            'path': upload_dir,
-            'name': file_name,
-            'title': upload.rawname,
-            'mime': mime.from_file(file_path)
-        }
+
+        mime = magic_mime.from_file(file_path)
+        if accept_only and mime not in accept_only:
+            os.remove(file_path)
+            continue
+
+        file_data = dict(path=path, name=upload.rawname, mime=mime)
+        
         if file_data['mime'] in _image_mimes:
             im = Image.open(file_path)
             file_data['width'] = im.size[0]
             file_data['height'] = im.size[1]
-        uploaded_file = bp.UploadedFile(**file_data)
-        uploaded_file.persist()
+
+        uploaded_file = UploadedFile(**file_data)
+        uploaded_file.save()
         json.append(uploaded_file)
+
     return json
 
 
 @bp.route('/submit', methods=['POST'])
-def submit():
+def submit_view():
     try:
-        files = request.files
-        uploaded_files = _handle_upload(files)
-        return jsonify({'files': uploaded_files})
+        return jsonify(success=True, files=_handle_upload(request.files))
     except:
-        raise
-        return jsonify({'statis': 'error'})
+        return jsonify(success=False)
 
 @bp.route('/load', methods=['POST'])
-def load():
-    return jsonify(bp.UploadedFile.gets(request.form.getlist('ids[]')))
+def load_view():
+    return jsonify(UploadedFile.gets(request.form.getlist('ids[]')))
 
-@bp.route('/list')
-def files():
-    upload_dir = request.form['dir'] if 'dir' in request.form else '/'
-    path = current_app.config['UPLOAD_PATH'] + upload_dir
-    dirs = []
-    for folder in [x[1] for x in os.walk(path)][0]:
-        dirs.append({'title': folder})
-    return jsonify(dict(
-        files=bp.UploadedFile.get_by_directory(upload_dir), 
-        dirs=dirs
-    ))
+@bp.route('/list', methods=['POST'])
+def files_view():
+    if 'folder' in request.form:
+        folder = UploadFolder.get(request.form['folder'])
+        files = folder.files
+        parent = folder.parent.id if folder.parent else 'undefined'
+        folders = [dict(name='..', id=parent)] + folder.children
+    else:
+        files = UploadedFile.get_root_files()
+        folders = UploadFolder.get_root_folders()
 
-@bp.route('/delete', methods=['POST'])
-def delete_file():
-    upload_path = current_app.config['UPLOAD_PATH']
-    upload_file = bp.UploadedFile.get(int(request.form['id']))
+    return jsonify(files=files, folders=folders)
+
+@bp.route('/mv', methods=['POST'])
+def mv_view():
+    folder = UploadFolder.get(request.form['folder_id'])
+    file_ids = request.form.getlist('files[]')
+    files = [upload for upload in UploadedFile.gets(file_ids)]
+    folder.files += files
+    folder.save()
+    return jsonify(success=True)
+
+@bp.route('/folder', methods=['POST'])
+def folder_view():
+    folder = UploadFolder()
+    if 'id' in request.form:
+        folder = UploadFolder.get(request.form['id'])
+        folder.created = datetime.today()
+    folder.name = request.form['name']
+    if 'parent' in request.form:
+        folder.parent_id = request.form['parent']
+    folder.save()
+    return jsonify(success=True)
+
+@bp.route('/delete/file', methods=['POST'])
+def delete_file_view():
+    upload_path = app.config['UPLOAD_PATH']
+    upload_file = UploadedFile.get(request.form['id'])
     try:
-        os.remove(upload_path + upload_file.path + upload_file.name)
+        os.remove(upload_path + upload_file.path)
         upload_file.delete()
     except:
-        return jsonify({'success': False})
-    return jsonify({'success': True})  
+        return jsonify(success=False)
+
+    return jsonify(success=True)  
+
+@bp.route('/delete/folder', methods=['POST'])
+def delete_folder_view():
+    pass

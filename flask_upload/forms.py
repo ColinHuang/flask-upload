@@ -1,7 +1,7 @@
 from wtforms.fields import Field
 from wtforms.widgets import Input, HTMLString, html_params
 
-from flask_upload.upload import bp
+from flask_upload.models import UploadedFile
 
 class FileInput(Input):
     input_type = 'file'
@@ -17,13 +17,13 @@ class FileInput(Input):
 
 
 class FileField(Field):
+    
     widget = FileInput()
-    def __init__(self, prop=None, uploaded_file_model=None, **kwargs):
+
+    def __init__(self, prop=None, uploaded_file_model=UploadedFile, **kwargs):
         if prop is None and '_id' in kwargs['_name']:
             prop = kwargs['_name'].replace('_id','')
         self.prop = prop
-        if uploaded_file_model is None:
-            uploaded_file_model = bp.UploadedFile
         self.uploaded_file_model = uploaded_file_model
         super(FileField, self).__init__(**kwargs)
 
