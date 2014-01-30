@@ -65,6 +65,14 @@ class UploadedFile(Model):
         return "%s%s%s_graph.jpg" % (app.config['EXTERNAL_URI'], 
             app.config['THUMBNAIL_WEB_PATH'], self.path)
 
+    def get_img_tag(self, thumbnail_size=None):
+        params = (self.get_web_path(), self.id)
+        if thumbnail_size:
+            params += ('style="%s"' % self.thumbnail_css(int(thumbnail_size)),) 
+        else:
+            params += ('',)
+        return '<img src="%s" data-id="%s" %s />' % params
+
     @classmethod
     def get_root_files(self):
         return self.query.filter(self.folder_id == None).all()
@@ -74,10 +82,13 @@ class UploadedFile(Model):
 
     def thumbnail_css(self, size=260):
         if self.width > self.height:
-            css = 'width: 100%; margin-top: %spx' % \
-                (size - ((size * self.height) / self.width) / 2) 
+            print (size - ((size * self.height) / self.width) / 2)
+            print (size - ((size * self.height) / self.width)) 
+            offset = (size - ((size * self.height) / self.width) ) / 2
+            css = 'width: 100%%; margin-top: %spx' % offset
         else:
             css = 'height: 100%'
+        print size, type(size)
         return css
 
     def thumbnail(self, size=(250,250), pad=False):

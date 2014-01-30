@@ -1,9 +1,10 @@
-;(function() {
+;(function($) {
     function FileField(element, options) {
         var self = this;
         this.files = [];
         this.multiple = typeof element.attr('multiple') !== 'undefined';
-        this.selectable = true; // If a picture can be selected
+        this.selectable = !!element.data('selectable'); // If a picture can be selected
+        this.selectable_field = $(element.data('selectable'));
         this.selected = false; 
         this.field = element.wrap('<div class="file-field">').parent()
             .addClass(this.multiple ? 'multiple' : '');       
@@ -23,13 +24,13 @@
             ].join(''));
         }
 
-        var fw = this.fw = $('<div/>').prependTo(this.field).filewidget({ size: 2});
+        this.filewidget = $('<div/>').prependTo(this.field).filewidget({ size: 2});
 
-        fw.on('makefile', function(e, file) {
+        this.filewidget.on('makefile', function(e, file) {
             if (self.multiple && self.selectable)
                 Array.prototype.splice.apply(file, [5, 0,
-                    '<div class="item-default-wrapper">',
-                        '<div class="item-default trans-super"><i class="glyphicon glyphicon-ok" /></div>',
+                    '<div class="item-select-wrapper">',
+                        '<div class="item-select trans-super"><i class="glyphicon glyphicon-ok" /></div>',
                         '<div class="trans-bkgd" />',
                     '</div>'
                 ]);
@@ -43,36 +44,37 @@
             if (file.id == self.selected)  {
                 if (self.files[0]) {
                     self.selected = self.files[0].id;
-                    self.get_item(self.files[0].id).addClass('default');
+                    self.get_item(self.files[0].id).addClass('selected');
                 } else {
                     self.selected = false;
                 }
             }
             self.get_item(file.id).fadeOut();
-            self.$.trigger('filefield.change');
-        }).on('click', '.item-default-wrapper', function() {
-            self.selected = $(this).parent().addClass('default').data('info').id;
-            $(this).parent().siblings().removeClass('default');
-            self.$.trigger('filefield.change');
+            self.element.trigger('filefield.change');
+        }).on('click', '.item-select-wrapper', function() {
+            var item = $(this).parent();
+            self._set_selected(item);
+            item.siblings().removeClass('selected');
+            self.element.trigger('filefield.change');
         });
 
-        this.$ = element.fileupload({
+        this.element = element.fileupload({
             url: '/upload/submit',
             dataType: 'json',
             done: function(e, data) {
                 self.val(data.result.files)
             }
         }).on('submit-files', function(e, files) {
-            fw.val(files);
+            self.filewidget.val(files);
         });
     }
     FileField.prototype = {
         disable: function() {
-            this.$.attr('disabled','disabled');
+            this.element.attr('disabled','disabled');
             this.controls.find('.btn').addClass('disabled');
         },
         enable: function() {
-            this.$.removeAttr('disabled');
+            this.element.removeAttr('disabled');
             this.controls.find('.btn').removeClass('disabled');
         },
         load: function(ids) {
@@ -82,22 +84,23 @@
             },'json');
             return this;
         },
-        val: function(files, ids) {    
+        load_dom: function(ids, selected) {
+            var self = this;
+            $.post('/upload/load',{ids: ids}, function(files) {
+                self.val(files);
+                if (self.selectable)
+                    self._set_selected(self.get_item(self.selectable_field.val()));
+            },'json');
+        },
+        val: function(files) {    
             if (files) {
-                if (files.jquery) {
-                    var filtered = files.filter('[data-selected]');
-                    if (filtered.length > 0)
-                        this.selected = filtered.data('id');
-                    return this.load(_.map(files, function(img) { return $(img).data('id') })) 
-                } 
-
                 if (!_.isArray(files)) 
                     files = [files];
-                this.fw.find('.files').html('');   
+                this.filewidget.find('.files').html('');   
                 if (!this.multiple)
                     this.files = [];
                 this.files = _.uniq(_.union(this.files, files), 'id');
-                this.fw.filewidget('loadfiles', this.files);
+                this.filewidget.filewidget('loadfiles', this.files);
                 if (this.multiple && this.selectable) {
                     if (!this.selected) {
                         var selected = _.filter(this.files, 'selected');
@@ -108,9 +111,9 @@
                             this.selected = files[0].id;
                     }
                     if (this.selected)
-                        this.get_item(this.selected).addClass('default'); 
+                        this._set_selected(this.get_item(this.selected))
                 }
-                this.$.trigger('filefield.change');
+                this.element.trigger('filefield.change');
             } else {
                 if (this.files.length == 0) 
                     return undefined;
@@ -127,7 +130,7 @@
             return undefined;
         }, 
         get_item: function(id) {
-            return this.fw.find('[data-id=' + id + ']');
+            return this.filewidget.find('[data-id=' + id + ']');
         },
         remove: function(remove) {
             _.remove(this.files, function(file) { return file.id == remove.id });
@@ -135,9 +138,14 @@
         clear: function() {
             this.files = [];
             this.selected = false;
-            this.fw.find('.files').html('');
-            this.$.trigger('filefield.change');
+            this.filewidget.find('.files').html('');
+            this.element.trigger('filefield.change');
             return this;
+        },
+        _set_selected: function(item) {
+            item.addClass('selected'); 
+            this.selected = item.data('id');
+            this.selectable_field.val(this.selected);
         }
     }
     FileField.DEFAULTS = {}
@@ -167,4 +175,4 @@
     $('input:file.form-control').each(function () {
          $(this).filefield();        
     });
-})();
+})(jQuery);

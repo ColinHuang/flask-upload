@@ -35,7 +35,7 @@
                 '<div class="item-wrapper"/>',    
             '</div>'];
             this.element.trigger('makefile', [file])
-            return $(file.join(''));
+            return $(file.join('')).disableSelection();
         },
         loadfiles: function(files, callback) {
             for(var x = 0; x < files.length; x++) {

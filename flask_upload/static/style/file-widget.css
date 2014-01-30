@@ -45,11 +45,11 @@
 .file-widget .grid .item-delete-wrapper {
     right: 0;
 }
-.file-widget .grid .item-default-wrapper {
+.file-widget .grid .item-select-wrapper {
     left: 0;
 }
 .file-widget .grid .item-delete-wrapper,
-.file-widget .grid .item-default-wrapper {
+.file-widget .grid .item-select-wrapper {
     position: absolute;
     top: 0;
     opacity: 0;
@@ -58,7 +58,7 @@
 }
 
 .file-widget .grid .item:hover .item-delete-wrapper,
-.file-widget .grid .item:hover .item-default-wrapper {
+.file-widget .grid .item:hover .item-select-wrapper {
     opacity: 1.0;
 }
 
@@ -66,12 +66,12 @@
     border-bottom-left-radius: 6px;
 }
 
-.file-widget .grid .item-default-wrapper .trans-bkgd {
+.file-widget .grid .item-select-wrapper .trans-bkgd {
     border-bottom-right-radius: 6px;
 }
 
 .file-widget .grid .item-delete,
-.file-widget .grid .item-default {
+.file-widget .grid .item-select {
     padding: 1px 6px;
 }
 
@@ -79,16 +79,16 @@
     color: #ff0000;
 }
 
-.file-widget .item-default i {
+.file-widget .item-select i {
     color: #9fba41;
 }
 
 .file-widget .grid.size4 .item-delete i,
-.file-widget .grid.size4 .item-default i {
+.file-widget .grid.size4 .item-select i {
     font-size: 28px;
 }
 .file-widget .grid.size2 .item-delete i,
-.file-widget .grid.size2 .item-default i {
+.file-widget .grid.size2 .item-select i {
     font-size: 16px;
 }
 

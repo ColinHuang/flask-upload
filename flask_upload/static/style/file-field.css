@@ -1,7 +1,7 @@
-.file-field .file-widget .grid .item.default {
+.file-field .file-widget .grid .item.selected {
     border: 1px solid #9FBA41;
 
 }
-.file-field .grid .item.default .item-default-wrapper {
+.file-field .grid .item.selected .item-select-wrapper {
     display: none;
 }

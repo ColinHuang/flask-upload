@@ -116,11 +116,15 @@ def files_view():
 
 @bp.route('/mv', methods=['POST'])
 def mv_view():
-    folder = UploadFolder.get(request.form['folder_id'])
-    file_ids = request.form.getlist('files[]')
-    files = [upload for upload in UploadedFile.gets(file_ids)]
-    folder.files += files
-    folder.save()
+    files = UploadedFile.gets(request.form.getlist('files[]'))
+    if 'folder_id' in request.form:
+        folder = UploadFolder.get(request.form['folder_id'])
+        folder.files += files
+        folder.save()
+    else:
+        for upload in files:
+            upload.folder_id = None
+            upload.save()
     return jsonify(success=True)
 
 @bp.route('/folder', methods=['POST'])
