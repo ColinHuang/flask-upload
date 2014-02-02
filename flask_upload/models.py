@@ -125,7 +125,7 @@ class UploadedFile(Model):
             else:
                 # ... crop the top and bottom:
                 new_height = int(self.width / ideal_aspect)
-                offset = (height - new_height) / 2
+                offset = (self.height - new_height) / 2
                 resize = (0, offset, self.width, self.height - offset)
             thumb = image.crop(resize).resize((600, 315), Image.ANTIALIAS)
 
