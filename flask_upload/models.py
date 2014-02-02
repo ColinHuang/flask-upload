@@ -104,7 +104,7 @@ class UploadedFile(Model):
 
         else:
             thumb = ImageOps.fit(image, size, Image.ANTIALIAS, (0.5, 0.5))
-        path = (app.config['THUMBNAIL_PATH'], self.get_path(), size[0])
+        path = (app.config['THUMBNAIL_PATH'], self.path, size[0])
         thumb.convert('RGB').save('%s%s%s.jpg' % path)
 
     def graph_thumbnail(self):
@@ -131,7 +131,7 @@ class UploadedFile(Model):
 
         if self.width >= 600:
             thumb = ImageOps.fit(image, size, Image.ANTIALIAS, (0.5, 0.5))
-        path = (app.config['THUMBNAIL_PATH'], self.get_path())
+        path = (app.config['THUMBNAIL_PATH'], self.path)
         thumb.convert('RGB').save("%s%s_graph.jpg" % path)
 
 class UploadFolder(Model):

@@ -109,7 +109,7 @@ def _get_request_folder(name='folder'):
 
 @bp.route('/', methods=['POST'])
 def submit_view():
-    print request.form
+    
     try:
         return jsonify(success=True, files=_handle_upload(request.files))
     except:
