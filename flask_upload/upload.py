@@ -96,7 +96,8 @@ def _handle_upload(files):
 def _get_root_folder():
     folder = UploadFolder.query.filter(UploadFolder.parent_id == None).first()
     if not folder:
-        folder = Folder()
+        folder = UploadFolder()
+        folder.save()
     return folder
 
 def _get_request_folder(name='folder'):
