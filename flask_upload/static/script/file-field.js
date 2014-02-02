@@ -59,7 +59,7 @@
         });
 
         this.element = element.fileupload({
-            url: '/upload/submit',
+            url: '/upload/',
             dataType: 'json',
             done: function(e, data) {
                 self.val(data.result.files)

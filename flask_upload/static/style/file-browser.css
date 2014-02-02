@@ -6,7 +6,7 @@
 
 
 
-#file_browser_modal .grid .item.selected {
+#file_browser_modal .grid .item.selected img {
     border-color: #66AFE9;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px rgba(102, 175, 233, 0.6);
     outline: 0 none;
@@ -27,10 +27,20 @@
 #file_browser_modal .item.ui-draggable-dragging {
     z-index: 1000;
 }
-#file_browser_modal .folder .item-delete-wrapper
+
+#file_browser_modal .item.ui-draggable-dragging,
+#file_browser_modal .item.ui-draggable-dragging  .item-wrapper {
+    height: auto;
+    width: auto;
+    max-width: 200px;
+    max-height: 200px;
+}
+
+#file_browser_modal .folder .item-delete-wrapper,
 #file_browser_modal .item.ui-draggable-dragging .item-delete-wrapper {
     display: none;
 }
+
 
 #file_browser_modal .empty {
     padding-top: 52px;
@@ -46,3 +56,18 @@
     display: none;
 }
 
+#file_browser_modal .folder .glyphicon-folder-open {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 52px;
+    margin-left: -26px;
+    margin-top: -26px;
+}
+
+#file_browser_modal .folder.ui-item-over {
+    background: #FFE45C;
+}
+#file_browser_modal .folder.ui-item-over .glyphicon-folder-open {
+    color: #000;
+}

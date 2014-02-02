@@ -48,6 +48,7 @@ def _handle_upload(files):
         return []
 
     json = []
+    folder =  _get_request_folder()
     upload_path = app.config['UPLOAD_PATH']
     web_path = app.config['UPLOAD_WEB_PATH']
     magic_mime = magic.Magic(mime=True)
@@ -62,6 +63,7 @@ def _handle_upload(files):
             upload.ext = ''
         else:
             upload.rawname, upload.ext = upload.filename.rsplit('.', 1)
+            upload.ext = '.' + upload.ext
            
         exists = True
         while exists:
@@ -84,14 +86,29 @@ def _handle_upload(files):
             file_data['height'] = im.size[1]
 
         uploaded_file = UploadedFile(**file_data)
+        uploaded_file.folder_id = folder.id
         uploaded_file.save()
+
         json.append(uploaded_file)
 
     return json
 
+def _get_root_folder():
+    folder = UploadFolder.query.filter(UploadFolder.parent_id == None).first()
+    if not folder:
+        folder = Folder()
+    return folder
 
-@bp.route('/submit', methods=['POST'])
+def _get_request_folder(name='folder'):
+    if name in request.form:
+        folder = UploadFolder.get(request.form[name])
+    else:
+        folder = _get_root_folder()
+    return folder
+
+@bp.route('/', methods=['POST'])
 def submit_view():
+    print request.form
     try:
         return jsonify(success=True, files=_handle_upload(request.files))
     except:
@@ -103,28 +120,25 @@ def load_view():
 
 @bp.route('/list', methods=['POST'])
 def files_view():
-    if 'folder' in request.form:
-        folder = UploadFolder.get(request.form['folder'])
-        files = folder.files
-        parent = folder.parent.id if folder.parent else 'undefined'
-        folders = [dict(name='..', id=parent)] + folder.children
-    else:
-        files = UploadedFile.get_root_files()
-        folders = UploadFolder.get_root_folders()
+    folder = _get_request_folder()
+    files = folder.files
+    folders = folder.children
+    if folder.parent:
+        folders = [dict(name='..', id=folder.parent.id)] + folders
 
     return jsonify(files=files, folders=folders)
 
 @bp.route('/mv', methods=['POST'])
 def mv_view():
-    files = UploadedFile.gets(request.form.getlist('files[]'))
-    if 'folder_id' in request.form:
-        folder = UploadFolder.get(request.form['folder_id'])
+    folder = _get_request_folder('dest')
+    if 'folder' in request.form:
+        move = UploadFolder.get(request.form['folder'])
+        move.parent = folder
+        move.save()
+    else:
+        files = UploadedFile.gets(request.form.getlist('files[]'))
         folder.files += files
         folder.save()
-    else:
-        for upload in files:
-            upload.folder_id = None
-            upload.save()
     return jsonify(success=True)
 
 @bp.route('/folder', methods=['POST'])
@@ -135,11 +149,13 @@ def folder_view():
         folder.created = datetime.today()
     folder.name = request.form['name']
     if 'parent' in request.form:
-        folder.parent_id = request.form['parent']
+        folder.parent_id = request.form['parent']  
+    else:
+        folder.parent_id = _get_root_folder().id
     folder.save()
     return jsonify(success=True)
 
-@bp.route('/delete/file', methods=['POST'])
+@bp.route('/rm', methods=['POST'])
 def delete_file_view():
     upload_path = app.config['UPLOAD_PATH']
     upload_file = UploadedFile.get(request.form['id'])

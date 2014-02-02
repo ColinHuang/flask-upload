@@ -50,9 +50,8 @@
                     var img = file.img = $('<img />', { src: file.web_path });
 
                     if (file.width > file.height) {
-                        img.width('100%').css('margin-top', (size - ((size * file.height) / file.width)) / 2);
-                    }
-                    else {
+                        img.width('100%');
+                    } else {
                         img.height('100%');
                         item.css('text-align','center');
                     }

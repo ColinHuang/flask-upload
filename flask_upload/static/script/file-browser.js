@@ -1,12 +1,12 @@
 ;window.FileBrowser = (function($, $window, $body, modal, shift) { 
     var fb = {
-        upload_url: '/upload/submit',
-        delete_file_url: '/upload/delete/file',
+        upload_url: '/upload/',
+        delete_file_url: '/upload/rm',
         list_url: '/upload/list',
         folder_url: '/upload/folder',
         move_url: '/upload/mv',
-        body: $('.modal-body', modal),
-        filewidget: $('.modal-body', modal).filewidget(),
+        body: $('.modal-body', modal).addClass('text-center').filewidget(),
+        submit: $('.btn.submit', modal),
         multiple: true,
         folder: undefined,   
 
@@ -25,10 +25,14 @@
                 fb.body.find('.files').html('');
                 fb.loaded_files = json;
                 fb._filewidget('loadfiles', json.folders, function(item, file) { 
-                    item.addClass('folder').droppable({
-                        accept: '.file',
+                    item.addClass('folder').draggable({
+                        revert: true,
+                        delay: 337
+                    }).droppable({
+                        accept: '.item',
+                        hoverClass: 'ui-item-over',
                         drop: fb._onfiledrop
-                    });
+                    }).find('.item-wrapper').append('<i class="glyphicon glyphicon-folder-open">');
                 });
                 fb._filewidget('loadfiles', json.files, function(item, file) {
                     item.addClass('file').draggable({
@@ -41,13 +45,6 @@
             }, 'json');
             return this;
         },
-        submit: function() {
-            var files = [];
-            $('.item.selected', this.files).each(function() {
-                files.push($(this).data('info'));
-            });
-            modal.trigger('submit-files', [files]);
-        },
         open: function() {
             modal.modal();
             return this;
@@ -55,6 +52,9 @@
         close: function() {
             modal.modal('hide');
             return this;
+        },
+        up_folder: function() {
+
         },
         set_folder: function(folder) {
             this.folder = folder === 'undefined' ? undefined : folder;
@@ -77,17 +77,25 @@
             fb.body.height(height < 252 ? 252 : height)
         },
         _onfiledrop: function(event, ui) {
-            var folder = $(this).data('id');
-            $.post(fb.move_url, { 
-                files: [ui.draggable.data('id')],
-                folder_id: folder === 'undefined' ? undefined : folder
-            }, function(json) {
+            var data = { dest: $(this).data('id') };
+            if (ui.draggable.hasClass('file'))
+                data.files= [ui.draggable.data('id')];
+            else 
+                data.folder = ui.draggable.data('id');
+            $.post(fb.move_url, data, function(json) {
                 if (json.success) {
                     ui.draggable.fadeOut('fast', function() {
                         $(this).remove();
                     });
                 }
             }, 'json');
+        },
+        _onsubmit: function() {
+            var files = [];
+            $('.item.selected', this.files).each(function() {
+                files.push($(this).data('info'));
+            });
+            modal.trigger('submit-files', [files]);
         },
         _onfail: function() {
             return function() {  }
@@ -100,12 +108,15 @@
     $('.fileinput-button input', modal).fileupload({
         url: fb.upload_url,
         dataType: 'json',
+        formData: function() {
+            return fb.folder ? [{ name: 'folder', value: fb.folder }] : [] ;
+        },
         done: function(e, data) {
             fb._filewidget('loadfiles',data.result.files)
         }
     });
 
-    $('.btn.btn-primary.submit', modal).on('click', fb.submit);
+    fb.submit.on('click', fb._onsubmit);
     
     // Delete File
     fb.body.on('click','.item-delete-wrapper', function() {
@@ -123,26 +134,33 @@
 
     // Select multiple items if shift is held down and multiple enabled
     .on('click', '.file .item-wrapper', function() {
-        var $item = $(this).parent();
+        var item = $(this).parent();
         if (!shift || !fb.multiple)
-            $item.siblings().removeClass('selected');
-        $item.addClass('selected');
+            item.siblings().removeClass('selected');
+        item.toggleClass('selected', !item.hasClass('selected'));
     });
 
     modal.on('show.bs.modal',function(e) {
-        var $rt = $(e.relatedTarget),
-            rtmodal = $rt.parents('.modal'),
-            field = $rt.parents('.file-field'),
-            input = field.find('input');
-        rtmodal.css('z-index',1000);
+        var button = $(e.relatedTarget),
+            button_modal = button.parents('.modal'),
+            filefield = button.parents('.file-field').find('input');
+
+        fb.get_files();
+
+        if (button.length == 0) {
+            return fb.submit.hide();
+        }
+
+        fb.submit.show();
+        button_modal.css('z-index', 1000);
         $(this).one('hide.bs.modal', function() {
-            rtmodal.css('z-index',1040);
+            button_modal.css('z-index', 1040);
         });
-        fb.get_files().multiple = input.filefield('multiple');
+        fb.multiple = filefield.filefield('multiple');
         modal.one('submit-files', function(e, files) {
-            if (input.length > 0) {
-                input.filefield('val', files);
-                modal.modal('hide');
+            if (filefield.length > 0) {
+                filefield.filefield('val', files);
+                fb.close();
             }
         });
     }).on('shown.bs.modal', function() {
@@ -163,8 +181,6 @@
                 fb.create_folder(val);
         })
     });
-
-    //$('.modal-footer .btn', modal).tooltip();
 
     $body.keydown(function(e) {
         if (e.keyCode == 16)

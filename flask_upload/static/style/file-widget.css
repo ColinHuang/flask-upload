@@ -6,10 +6,11 @@
     bottom: 0;
     background: #000;
     opacity: 0.67;
+    border-radius: 6px;
 }
 
 .file-widget .item {
-    overflow: hidden;
+    
 }
 .file-widget .list .item {
 
@@ -17,13 +18,19 @@
 .file-widget .grid .item {
     display: inline-block;
     position: relative;
-    vertical-align: middle;
-    border: 1px solid;
+    vertical-align: bottom;
     border-radius: 6px;
 }
+.file-widget .grid .item img {
+    border-radius: 6px
+}
 
+.file-widget .grid .item-wrapper {
+    display: table-cell;
+    vertical-align: bottom;
+}
 .file-widget .grid.size4 .item {
-    margin: 6px 18px;
+    margin: 6px 13px;
 }
 
 .file-widget .grid.size4 .item,
@@ -62,13 +69,7 @@
     opacity: 1.0;
 }
 
-.file-widget .grid .item-delete-wrapper .trans-bkgd {
-    border-bottom-left-radius: 6px;
-}
 
-.file-widget .grid .item-select-wrapper .trans-bkgd {
-    border-bottom-right-radius: 6px;
-}
 
 .file-widget .grid .item-delete,
 .file-widget .grid .item-select {
@@ -108,6 +109,8 @@
     white-space: nowrap;
     color: #eee;
     padding: 3px 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 
@@ -117,10 +120,4 @@
 
 .file-widget img.width-100 {
     width: 100%;
-}
-
-.file-widget .grid .folder {
-    background-image: url(/upload/static/images/folder64.png);
-    background-repeat: no-repeat;
-    background-position: center center;
 }

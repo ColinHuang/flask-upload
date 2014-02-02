@@ -4,7 +4,7 @@ A blueprint that provides HTML5 multi-file upload to a Flask project.
 
 ## Routes
 
-- /upload/submit
+- /upload/
 - /upload/list
 - /upload/delete
 
