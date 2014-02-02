@@ -119,14 +119,14 @@ class UploadedFile(Model):
             ideal_aspect = 600 / float(315)
             if aspect > ideal_aspect:
                 # Then crop the left and right edges:
-                new_width = int(ideal_aspect * height)
-                offset = (width - new_width) / 2
-                resize = (offset, 0, width - offset, height)
+                new_width = int(ideal_aspect * self.height)
+                offset = (self.width - new_width) / 2
+                resize = (offset, 0, self.width - offset, self.height)
             else:
                 # ... crop the top and bottom:
-                new_height = int(width / ideal_aspect)
+                new_height = int(self.width / ideal_aspect)
                 offset = (height - new_height) / 2
-                resize = (0, offset, width, height - offset)
+                resize = (0, offset, self.width, self.height - offset)
             thumb = image.crop(resize).resize((600, 315), Image.ANTIALIAS)
 
         if self.width >= 600:
